@@ -60,7 +60,7 @@ namespace jvl
             _data = nullptr;
             _size = 0;
             _capacity = 0;
-            _alloc = allocator_type{}
+            _alloc = allocator_type{};
         }
 
         inline void deallocate()

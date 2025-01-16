@@ -43,8 +43,7 @@ namespace jvl
 
         void assign(const vector& rhs)
         {
-            if constexpr (std::is_trivial_v<value_type>)
-            {
+            if constexpr (std::is_trivial_v<value_type>) {
                 std::memcpy(_data, rhs._data, sizeof(value_type) * rhs._size);
                 _size = rhs._size;
                 return;
@@ -65,8 +64,10 @@ namespace jvl
 
         inline void deallocate()
         {
-            if (_data)
-                _alloc.deallocate(_data, _capacity);
+            if (!_data)
+                return;
+            _alloc.deallocate(_data, _capacity);
+            _data = nullptr;
         }
 
     public:
@@ -127,12 +128,10 @@ namespace jvl
         {
             if (_size != rhs._size)
                 return false;
-            if constexpr (std::is_trivial_v<value_type>)
-            {
+            if constexpr (std::is_trivial_v<value_type>) {
                 return (std::memcmp(_data, rhs._data, sizeof(value_type) * rhs._size) == 0);
             }
-            for (size_t i = 0; i < _size; i++)
-            {
+            for (size_t i = 0; i < _size; i++) {
                 if (_data[i] != rhs[i]) return false;
             }
             return true;
@@ -140,16 +139,15 @@ namespace jvl
 
         ~vector()
         {
-            if constexpr (!std::is_trivial_v<value_type>)
-            {
+            if constexpr (!std::is_trivial_v<value_type>) {
                 clear();
             }
             deallocate();
         }
 
-        void clear() {
-            if constexpr (std::is_trivial_v<value_type>)
-            {
+        void clear()
+        {
+            if constexpr (std::is_trivial_v<value_type>) {
                 _size = 0;
                 return;
             }
@@ -160,7 +158,8 @@ namespace jvl
             _size = 0;
         }
 
-        void push_back(const_reference value) {
+        void push_back(const_reference value)
+        {
             emplace_back(value);
         }
 
@@ -185,25 +184,24 @@ namespace jvl
             _size = size;
 
             if constexpr (std::is_trivial_v<value_type>) {
-                memset(_data + prev_size, 0, size - prev_size);
+                std::memset(_data + prev_size, 0, size - prev_size);
             }
             else {
                 pointer alloc_it = _data + _size;
                 pointer alloc_it_end = _data + size;
-                for (; alloc_it != alloc_it_end; ++alloc_it)
-                {
+                for (; alloc_it != alloc_it_end; ++alloc_it) {
                     construct(alloc_it);
                 }
             }
         }
 
-        void reserve(size_type capacity) {
+        void reserve(size_type capacity)
+        {
             if (capacity <= _capacity)
                 return;
             
             pointer data = _alloc.allocate(capacity);
             if (_data) {
-
                 if constexpr (std::is_trivial_v<value_type>) {
                     std::memcpy(data, _data, sizeof(value_type) * _size);
                 }
@@ -213,8 +211,7 @@ namespace jvl
                     pointer it = _data;
                     pointer iend = _data + _size;
                     
-                    for (; it != iend; ++new_it, ++it)
-                    {
+                    for (; it != iend; ++new_it, ++it) {
                         construct(new_it, std::move(*it));
                         it->~value_type();
                     }
@@ -227,7 +224,8 @@ namespace jvl
             if (data) _alloc.deallocate(data, capacity);
         }
 
-        void shrink(size_type capacity) {
+        void shrink(size_type capacity)
+        {
             if (capacity >= _capacity) {
                 return;
             }
@@ -262,22 +260,32 @@ namespace jvl
             if (data) _alloc.deallocate(data, capacity);
         }
 
-        void shrink_to_size() {
+        void shrink_to_size()
+        {
             if (_size < _capacity) {
                 shrink(_size);
             }
         }
 
-        void pop_back() {
+        void pop_back()
+        {
+            if (_size == 0)
+                return;
+            
+            if constexpr (!std::is_trivial_v<value_type>)
+                back().~value_type();
             _size -= 1;
+            
         }
 
-        reference at(size_type i) noexcept {
+        reference at(size_type i) noexcept
+        {
             expect (i < _size);
             return _data[i];
         }
 
-        const_reference at(size_type i) const noexcept {
+        const_reference at(size_type i) const noexcept
+        {
             expect (i < _size);
             return _data[i];
         }
@@ -296,17 +304,10 @@ namespace jvl
         reference operator[](size_type i) noexcept { return _data[i]; };
         const_reference operator[](size_type i) const noexcept { return _data[i]; };
 
-        iterator insert(const_iterator position, const_reference i) {
-
-        }
-
-        iterator insert(const_iterator position, value_type i) {
-
-        }
+        reference back() noexcept {return at(_size - 1); } 
+        const_reference back() const noexcept { return at(_size - 1); }
 
         iterator erase(const_iterator position);
         iterator erase(const_iterator first, const_iterator last);
-
-        // swap
     };
 }

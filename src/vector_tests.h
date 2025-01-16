@@ -121,4 +121,14 @@ public:
             jvl::testing::equal(v[i], v1[i], "element not equal");
         }
     });
+
+    TEST(VectorBackReturnsExpectedResult, [](){
+        jvl::vector<int> v{};
+        for (size_t i = 0; i < 16; i++)
+        {
+            v.emplace_back(i);
+        }
+
+        jvl::testing::equal(15, v.back());
+    });
 }

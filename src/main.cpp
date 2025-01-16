@@ -8,7 +8,4 @@
 int main()
 {    
     jvl::testing::run_tests();
-
-    jvl::vector<int> v{};
-    v.at(5);
 }
